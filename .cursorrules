@@ -1,0 +1,154 @@
+# Simple Coupon Restrictions Plugin - Cursor Rules
+
+## Project Overview
+This is a WordPress plugin for WooCommerce that restricts customers from using any coupons after they've used specific "restricted" coupons.
+
+## Code Standards
+
+### WordPress Coding Standards
+- Follow WordPress PHP Coding Standards
+- Use proper WordPress hooks and filters
+- Implement proper nonce verification for security
+- Use WordPress database functions (wpdb) for custom queries
+- Follow WordPress plugin structure and organization
+
+### PHP Standards
+- Use PSR-4 autoloading
+- Implement proper namespacing: `SimpleCouponRestrictions\`
+- Use PHP 7.4+ features when appropriate
+- Follow SOLID principles
+- Use proper error handling and validation
+
+### WooCommerce Integration
+- Use WooCommerce hooks and filters
+- Implement HPOS (High-Performance Order Storage) compatibility
+- Use WooCommerce order objects instead of post meta
+- Follow WooCommerce coding standards
+- Declare compatibility with WooCommerce features
+
+### Security Best Practices
+- Always verify nonces for admin actions
+- Sanitize all user inputs
+- Escape all outputs
+- Use proper capability checks
+- Validate data before database operations
+
+### Database Operations
+- Use WordPress database functions
+- Implement proper table creation with dbDelta
+- Use prepared statements for custom queries
+- Follow WordPress database naming conventions
+- Handle database errors gracefully
+
+## File Structure
+```
+simple-coupon-restrictions/
+├── simple-coupon-restrictions.php (main plugin file)
+├── readme.txt (WordPress plugin readme)
+├── README.md (GitHub readme)
+├── .cursorrules (this file)
+├── assets/
+│   ├── css/admin.css
+│   └── js/admin.js
+└── includes/
+    ├── Core/
+    │   ├── Plugin.php
+    │   ├── Activator.php
+    │   ├── CouponTracker.php
+    │   └── RestrictionChecker.php
+    ├── Admin/
+    │   ├── AdminController.php
+    │   └── AdminView.php
+    └── Ajax/
+        └── AjaxHandler.php
+```
+
+## Naming Conventions
+- Classes: PascalCase (e.g., `CouponTracker`)
+- Methods: camelCase (e.g., `trackCouponUsage`)
+- Properties: camelCase (e.g., `$restrictedCoupons`)
+- Constants: UPPER_SNAKE_CASE (e.g., `SCR_VERSION`)
+- Database tables: prefix + snake_case (e.g., `wp_scr_restricted_customers`)
+- Hooks: snake_case with plugin prefix (e.g., `scr_customer_restricted`)
+
+## Key Features
+1. **Coupon Restriction Management**: Admin can add/remove coupons from restricted list
+2. **Customer Tracking**: Track which customers used restricted coupons
+3. **Restriction Enforcement**: Block restricted customers from using any coupons
+4. **Admin Interface**: Modern WordPress admin interface with AJAX search
+5. **HPOS Compatibility**: Full support for WooCommerce High-Performance Order Storage
+6. **Customer Management**: View and reset customer restrictions
+
+## Development Guidelines
+
+### When Adding New Features
+1. Follow the existing namespace structure
+2. Add proper hooks for extensibility
+3. Include proper documentation
+4. Test with both legacy and HPOS order storage
+5. Ensure backward compatibility
+
+### When Modifying Database Operations
+1. Use WordPress database functions
+2. Test with different WordPress/WooCommerce versions
+3. Handle migration scenarios
+4. Include proper error handling
+
+### When Working with Orders
+1. Use WooCommerce order objects
+2. Support both legacy post meta and HPOS
+3. Use proper WooCommerce hooks
+4. Handle order status transitions correctly
+
+### Frontend/Admin Interface
+1. Use WordPress admin styles and patterns
+2. Implement proper AJAX with nonces
+3. Use SweetAlert2 for user-friendly alerts
+4. Ensure responsive design
+5. Follow WordPress accessibility guidelines
+
+## Testing Considerations
+- Test with WooCommerce HPOS enabled and disabled
+- Test with different WordPress/WooCommerce versions
+- Test coupon validation in various scenarios
+- Test admin interface functionality
+- Test database operations and migrations
+
+## Common Patterns
+
+### Database Query Pattern
+```php
+global $wpdb;
+$table_name = $wpdb->prefix . 'scr_restricted_customers';
+$results = $wpdb->get_results(
+    $wpdb->prepare(
+        "SELECT * FROM {$table_name} WHERE customer_id = %d",
+        $customer_id
+    )
+);
+```
+
+### WooCommerce Order Pattern
+```php
+$order = wc_get_order( $order_id );
+if ( ! $order ) {
+    return;
+}
+// Use order object methods
+$customer_id = $order->get_customer_id();
+```
+
+### Admin Notice Pattern
+```php
+add_action( 'admin_notices', function() {
+    echo '<div class="notice notice-success is-dismissible">';
+    echo '<p>' . esc_html( $message ) . '</p>';
+    echo '</div>';
+});
+```
+
+## Plugin Constants
+- `SCR_VERSION`: Plugin version
+- `SCR_PLUGIN_FILE`: Main plugin file path
+- `SCR_PLUGIN_URL`: Plugin URL
+- `SCR_PLUGIN_PATH`: Plugin directory path 
