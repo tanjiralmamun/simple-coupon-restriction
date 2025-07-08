@@ -112,17 +112,21 @@ class AdminController {
         // Show restricted customer notice on user edit page
         if ( isset( $_GET['user_id'] ) ) {
             $user_id = intval( $_GET['user_id'] );
-            $restriction_checker = new \SimpleCouponRestrictions\Core\RestrictionChecker();
+            $user = get_user_by( 'id', $user_id );
             
-            if ( $restriction_checker->is_customer_restricted( $user_id ) ) {
-                $restricted_coupons = $restriction_checker->get_customer_restricted_coupons( $user_id );
+            if ( $user ) {
+                $restriction_checker = new \SimpleCouponRestrictions\Core\RestrictionChecker();
                 
-                echo '<div class="notice notice-warning">';
-                echo '<p><strong>' . __( 'Coupon Restriction:', 'simple-coupon-restrictions' ) . '</strong> ';
-                echo __( 'This customer has used restricted coupons:', 'simple-coupon-restrictions' ) . ' <strong>' . implode( ', ', $restricted_coupons ) . '</strong></p>';
-                echo '<p>' . __( 'They are blocked from using any coupons in future orders.', 'simple-coupon-restrictions' ) . '</p>';
-                echo '<p><a href="' . admin_url( 'admin.php?page=simple-coupon-restrictions&action=reset_customer&customer_id=' . $user_id . '&_wpnonce=' . wp_create_nonce( 'scr_reset_customer_' . $user_id ) ) . '" class="button button-secondary">' . __( 'Reset Restrictions', 'simple-coupon-restrictions' ) . '</a></p>';
-                echo '</div>';
+                if ( $restriction_checker->is_customer_restricted( $user->user_email, $user_id ) ) {
+                    $restricted_coupons = $restriction_checker->get_customer_restricted_coupons( $user->user_email, $user_id );
+                    
+                    echo '<div class="notice notice-warning">';
+                    echo '<p><strong>' . __( 'Coupon Restriction:', 'simple-coupon-restrictions' ) . '</strong> ';
+                    echo __( 'This customer has used restricted coupons:', 'simple-coupon-restrictions' ) . ' <strong>' . implode( ', ', $restricted_coupons ) . '</strong></p>';
+                    echo '<p>' . __( 'They are blocked from using any coupons in future orders.', 'simple-coupon-restrictions' ) . '</p>';
+                    echo '<p><a href="' . admin_url( 'admin.php?page=simple-coupon-restrictions&action=reset_customer&customer_id=' . $user_id . '&customer_email=' . urlencode( $user->user_email ) . '&_wpnonce=' . wp_create_nonce( 'scr_reset_customer_' . $user_id ) ) . '" class="button button-secondary">' . __( 'Reset Restrictions', 'simple-coupon-restrictions' ) . '</a></p>';
+                    echo '</div>';
+                }
             }
         }
     }
@@ -148,6 +152,11 @@ class AdminController {
         // Handle coupon removal
         if ( isset( $_GET['action'] ) && $_GET['action'] === 'remove_coupon' && isset( $_GET['coupon'] ) ) {
             $this->remove_restricted_coupon();
+        }
+        
+        // Handle processing existing orders
+        if ( isset( $_GET['action'] ) && $_GET['action'] === 'process_existing_orders' ) {
+            $this->process_existing_orders();
         }
     }
     
@@ -176,20 +185,56 @@ class AdminController {
      */
     private function reset_customer_restrictions() {
         $customer_id = intval( $_GET['customer_id'] );
+        $customer_email = isset( $_GET['customer_email'] ) ? sanitize_email( $_GET['customer_email'] ) : '';
         $nonce = $_GET['_wpnonce'];
         
-        if ( ! wp_verify_nonce( $nonce, 'scr_reset_customer_' . $customer_id ) ) {
-            wp_die( __( 'Security check failed', 'simple-coupon-restrictions' ) );
+        // Handle nonce verification for both registered and guest customers
+        if ( $customer_id > 0 ) {
+            if ( ! wp_verify_nonce( $nonce, 'scr_reset_customer_' . $customer_id ) ) {
+                wp_die( __( 'Security check failed', 'simple-coupon-restrictions' ) );
+            }
+        } else {
+            if ( ! wp_verify_nonce( $nonce, 'scr_reset_customer_0' ) ) {
+                wp_die( __( 'Security check failed', 'simple-coupon-restrictions' ) );
+            }
         }
         
-        delete_user_meta( $customer_id, '_restricted_coupons_used' );
+        // For registered customers, remove user meta
+        if ( $customer_id > 0 ) {
+            delete_user_meta( $customer_id, '_restricted_coupons_used' );
+        }
         
-        // Also remove from database
+        // Remove from database (works for both registered and guest)
         global $wpdb;
         $table_name = $wpdb->prefix . 'scr_restricted_customers';
-        $wpdb->delete( $table_name, array( 'customer_id' => $customer_id ), array( '%d' ) );
         
-        $this->redirect_with_message( __( 'Customer restrictions have been reset successfully!', 'simple-coupon-restrictions' ) );
+        if ( $customer_email ) {
+            $wpdb->delete( $table_name, array( 'customer_email' => $customer_email ), array( '%s' ) );
+            
+            // For guest customers, also clear session and transient data
+            if ( $customer_id === 0 ) {
+                $transient_key = 'scr_guest_restrictions_' . md5( $customer_email );
+                delete_transient( $transient_key );
+                
+                // Clear email-specific session data if current session exists
+                if ( WC()->session ) {
+                    $session_key = 'scr_restricted_coupons_' . md5( $customer_email );
+                    WC()->session->__unset( $session_key );
+                    
+                    // Also clear the old global session key for backward compatibility
+                    WC()->session->__unset( 'scr_restricted_coupons' );
+                }
+            }
+        } else {
+            // Fallback to customer_id only (for backward compatibility)
+            $wpdb->delete( $table_name, array( 'customer_id' => $customer_id ), array( '%d' ) );
+        }
+        
+        $customer_type = $customer_id > 0 ? 'registered' : 'guest';
+        $this->redirect_with_message( sprintf( 
+            __( '%s customer restrictions have been reset successfully!', 'simple-coupon-restrictions' ),
+            ucfirst( $customer_type )
+        ) );
     }
     
     /**
@@ -216,14 +261,78 @@ class AdminController {
     private function redirect_with_message( $message ) {
         $redirect_url = add_query_arg( 
             array( 
-                'page' => 'simple-coupon-restrictions',
-                'scr_action' => 'success',
-                'scr_message' => urlencode( $message )
+                'scr_action' => 'success', 
+                'scr_message' => urlencode( $message ) 
             ), 
-            admin_url( 'admin.php' ) 
+            admin_url( 'admin.php?page=simple-coupon-restrictions' ) 
         );
-        
         wp_redirect( $redirect_url );
         exit;
+    }
+    
+    /**
+     * Process existing orders to track guest customers
+     */
+    private function process_existing_orders() {
+        // Verify nonce
+        if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'scr_process_existing_orders' ) ) {
+            wp_die( __( 'Security check failed', 'simple-coupon-restrictions' ) );
+        }
+        
+        // Get restricted coupons
+        $restricted_coupons = get_option( 'scr_restricted_coupons', array() );
+        
+        if ( empty( $restricted_coupons ) ) {
+            $this->redirect_with_message( __( 'No restricted coupons configured.', 'simple-coupon-restrictions' ) );
+            return;
+        }
+        
+        // Get orders that used restricted coupons
+        $orders = wc_get_orders( array(
+            'limit' => -1,
+            'status' => array( 'completed', 'processing' ),
+            'meta_query' => array(
+                array(
+                    'key' => '_coupon_lines',
+                    'compare' => 'EXISTS'
+                )
+            )
+        ) );
+        
+        $processed_count = 0;
+        $tracker = new \SimpleCouponRestrictions\Core\CouponTracker();
+        
+        foreach ( $orders as $order ) {
+            $used_coupons = $order->get_coupon_codes();
+            
+            // Check if this order used any restricted coupons
+            $has_restricted_coupon = false;
+            foreach ( $used_coupons as $coupon_code ) {
+                if ( in_array( $coupon_code, $restricted_coupons ) ) {
+                    $has_restricted_coupon = true;
+                    break;
+                }
+            }
+            
+            if ( $has_restricted_coupon ) {
+                // Check if this order is already tracked
+                global $wpdb;
+                $table_name = $wpdb->prefix . 'scr_restricted_customers';
+                $existing = $wpdb->get_var( $wpdb->prepare(
+                    "SELECT id FROM $table_name WHERE order_id = %d",
+                    $order->get_id()
+                ) );
+                
+                if ( ! $existing ) {
+                    $tracker->track_order_coupons( $order );
+                    $processed_count++;
+                }
+            }
+        }
+        
+        $this->redirect_with_message( sprintf( 
+            __( 'Successfully processed %d existing orders with restricted coupons.', 'simple-coupon-restrictions' ),
+            $processed_count
+        ) );
     }
 } 

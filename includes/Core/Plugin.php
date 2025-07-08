@@ -65,6 +65,13 @@ class Plugin {
         // Hook into coupon validation
         add_filter( 'woocommerce_coupon_is_valid', array( $this, 'check_coupon_restriction' ), 10, 2 );
         
+        // Clear old session data for guest customers (migration from old version)
+        add_action( 'woocommerce_init', array( $this, 'clear_old_session_data' ) );
+        
+        // Cleanup expired guest restrictions daily
+        add_action( 'wp', array( $this, 'schedule_cleanup' ) );
+        add_action( 'scr_cleanup_guest_restrictions', array( $this, 'cleanup_guest_restrictions' ) );
+        
         // Declare HPOS compatibility
         add_action( 'before_woocommerce_init', array( $this, 'declare_hpos_compatibility' ) );
     }
@@ -112,5 +119,28 @@ class Plugin {
         if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
             \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', SCR_PLUGIN_FILE, true );
         }
+    }
+    
+    /**
+     * Schedule cleanup for guest restrictions
+     */
+    public function schedule_cleanup() {
+        if ( ! wp_next_scheduled( 'scr_cleanup_guest_restrictions' ) ) {
+            wp_schedule_event( time(), 'daily', 'scr_cleanup_guest_restrictions' );
+        }
+    }
+    
+    /**
+     * Cleanup expired guest restrictions
+     */
+    public function cleanup_guest_restrictions() {
+        GuestHelper::cleanup_expired_guest_restrictions();
+    }
+    
+    /**
+     * Clear old global session data (for migration from old version)
+     */
+    public function clear_old_session_data() {
+        GuestHelper::clear_old_session_data();
     }
 } 

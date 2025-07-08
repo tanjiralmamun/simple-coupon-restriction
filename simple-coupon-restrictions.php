@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Simple Coupon Restrictions
  * Plugin URI: https://tanjirsdev.com
- * Description: Track when customers use specific coupons and block them from using other coupons in future orders.
- * Version: 1.0.0
+ * Description: Track when customers use specific coupons and block them from using other coupons in future orders. Supports both registered and guest customers.
+ * Version: 1.1.0
  * Author: Tanjir Al Mamun
  * Author URI: https://tanjirsdev.com
  * License: GPL v2 or later
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'SCR_PLUGIN_FILE', __FILE__ );
 define( 'SCR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SCR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'SCR_VERSION', '1.0.0' );
+define( 'SCR_VERSION', '1.1.0' );
 
 // Autoloader for PSR-4
 spl_autoload_register( function ( $class ) {
@@ -130,6 +130,9 @@ function scr_activate() {
 register_deactivation_hook( __FILE__, 'scr_deactivate' );
 
 function scr_deactivate() {
+    // Clear scheduled cleanup events
+    wp_clear_scheduled_hook( 'scr_cleanup_guest_restrictions' );
+    
     // Flush rewrite rules
     flush_rewrite_rules();
 } 

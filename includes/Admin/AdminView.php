@@ -109,6 +109,18 @@ class AdminView {
                             <?php _e( 'Customers who have used restricted coupons and are blocked from using any coupons in future orders.', 'simple-coupon-restrictions' ); ?>
                         </p>
                         
+                        <div class="scr-process-existing-orders" style="margin-bottom: 20px;">
+                            <p class="description">
+                                <?php _e( 'If you have existing orders that used restricted coupons before this feature was enabled, you can process them to track those customers.', 'simple-coupon-restrictions' ); ?>
+                            </p>
+                            <a href="<?php echo admin_url( 'admin.php?page=simple-coupon-restrictions&action=process_existing_orders&_wpnonce=' . wp_create_nonce( 'scr_process_existing_orders' ) ); ?>" 
+                               class="button button-secondary" 
+                               onclick="return confirm('<?php _e( 'This will process all existing orders that used restricted coupons. This action cannot be undone. Continue?', 'simple-coupon-restrictions' ); ?>');">
+                                <span class="dashicons dashicons-update"></span>
+                                <?php _e( 'Process Existing Orders', 'simple-coupon-restrictions' ); ?>
+                            </a>
+                        </div>
+                        
                         <div id="scr-customers-container">
                             <?php $this->render_customers_table( $restricted_customers, 1 ); ?>
                         </div>
@@ -142,6 +154,8 @@ class AdminView {
         $results = $wpdb->get_results( $wpdb->prepare( "
             SELECT 
                 customer_id,
+                customer_email,
+                customer_type,
                 coupon_code,
                 restricted_at
             FROM {$table_name}
@@ -152,23 +166,38 @@ class AdminView {
         $customers = array();
         
         foreach ( $results as $result ) {
-            $customer_id = $result->customer_id;
+            $customer_email = $result->customer_email;
+            $customer_type = $result->customer_type;
             
-            if ( ! isset( $customers[$customer_id] ) ) {
-                $user = get_user_by( 'id', $customer_id );
-                if ( $user ) {
-                    $customers[$customer_id] = array(
-                        'id' => $customer_id,
-                        'name' => $user->display_name,
-                        'email' => $user->user_email,
+            if ( ! isset( $customers[$customer_email] ) ) {
+                if ( $customer_type === 'registered' && $result->customer_id ) {
+                    // Registered customer
+                    $user = get_user_by( 'id', $result->customer_id );
+                    if ( $user ) {
+                        $customers[$customer_email] = array(
+                            'id' => $result->customer_id,
+                            'name' => $user->display_name,
+                            'email' => $user->user_email,
+                            'type' => 'registered',
+                            'coupons' => array(),
+                            'restricted_date' => date_i18n( get_option( 'date_format' ), strtotime( $result->restricted_at ) )
+                        );
+                    }
+                } else {
+                    // Guest customer
+                    $customers[$customer_email] = array(
+                        'id' => 0,
+                        'name' => __( 'Guest Customer', 'simple-coupon-restrictions' ),
+                        'email' => $customer_email,
+                        'type' => 'guest',
                         'coupons' => array(),
                         'restricted_date' => date_i18n( get_option( 'date_format' ), strtotime( $result->restricted_at ) )
                     );
                 }
             }
             
-            if ( isset( $customers[$customer_id] ) ) {
-                $customers[$customer_id]['coupons'][] = $result->coupon_code;
+            if ( isset( $customers[$customer_email] ) ) {
+                $customers[$customer_email]['coupons'][] = $result->coupon_code;
             }
         }
         
@@ -197,7 +226,7 @@ class AdminView {
         }
         
         return $wpdb->get_var( "
-            SELECT COUNT(DISTINCT customer_id)
+            SELECT COUNT(DISTINCT customer_email)
             FROM {$table_name}
         " );
     }
@@ -231,7 +260,11 @@ class AdminView {
                         <?php foreach ( $customers as $customer ) : ?>
                             <tr>
                                 <td>
-                                    <strong><?php echo esc_html( $customer['name'] ); ?></strong><br>
+                                    <strong><?php echo esc_html( $customer['name'] ); ?></strong>
+                                    <?php if ( $customer['type'] === 'guest' ) : ?>
+                                        <span class="scr-customer-badge scr-guest-badge"><?php _e( 'Guest', 'simple-coupon-restrictions' ); ?></span>
+                                    <?php endif; ?>
+                                    <br>
                                     <small><?php echo esc_html( $customer['email'] ); ?></small>
                                 </td>
                                 <td>
@@ -243,11 +276,19 @@ class AdminView {
                                     <?php echo esc_html( $customer['restricted_date'] ); ?>
                                 </td>
                                 <td>
-                                    <a href="<?php echo admin_url( 'admin.php?page=simple-coupon-restrictions&action=reset_customer&customer_id=' . $customer['id'] . '&_wpnonce=' . wp_create_nonce( 'scr_reset_customer_' . $customer['id'] ) ); ?>" 
-                                       class="button button-small button-secondary scr-reset-customer">
-                                        <span class="dashicons dashicons-update"></span>
-                                        <?php _e( 'Reset', 'simple-coupon-restrictions' ); ?>
-                                    </a>
+                                    <?php if ( $customer['type'] === 'registered' ) : ?>
+                                        <a href="<?php echo admin_url( 'admin.php?page=simple-coupon-restrictions&action=reset_customer&customer_id=' . $customer['id'] . '&customer_email=' . urlencode( $customer['email'] ) . '&_wpnonce=' . wp_create_nonce( 'scr_reset_customer_' . $customer['id'] ) ); ?>" 
+                                           class="button button-small button-secondary scr-reset-customer">
+                                            <span class="dashicons dashicons-update"></span>
+                                            <?php _e( 'Reset', 'simple-coupon-restrictions' ); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        <a href="<?php echo admin_url( 'admin.php?page=simple-coupon-restrictions&action=reset_customer&customer_id=0&customer_email=' . urlencode( $customer['email'] ) . '&_wpnonce=' . wp_create_nonce( 'scr_reset_customer_0' ) ); ?>" 
+                                           class="button button-small button-secondary scr-reset-customer">
+                                            <span class="dashicons dashicons-update"></span>
+                                            <?php _e( 'Reset', 'simple-coupon-restrictions' ); ?>
+                                        </a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
