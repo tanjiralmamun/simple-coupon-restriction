@@ -26,23 +26,33 @@ class RestrictionChecker {
         // Get customer ID (0 for guest customers)
         $customer_id = is_user_logged_in() ? get_current_user_id() : 0;
         
-        // Check if customer has used restricted coupons before
+        // Get current coupon code
+        $current_coupon_code = $coupon->get_code();
+        
+        // Get list of restricted coupons
+        $restricted_coupons = get_option( 'scr_restricted_coupons', array() );
+        
+        // If the current coupon is not restricted, allow it
+        if ( ! in_array( $current_coupon_code, $restricted_coupons ) ) {
+            return $is_valid;
+        }
+        
+        // If the current coupon IS restricted, check if customer has used restricted coupons before
         $restricted_coupons_used = $this->get_customer_restricted_coupons( $customer_email, $customer_id );
         
-        // If customer has used restricted coupons before, block all coupons
+        // If customer has used restricted coupons before, block this restricted coupon
         if ( ! empty( $restricted_coupons_used ) && is_array( $restricted_coupons_used ) ) {
-            $current_coupon_code = $coupon->get_code();
             $customer_type = is_user_logged_in() ? 'registered' : 'guest';
             
-            // Block the coupon and show error message
+            // Block the restricted coupon and show error message
             $error_message = sprintf(
-                __( 'You cannot use coupon "%s" because you have previously used restricted coupons (%s).', 'simple-coupon-restrictions' ),
+                __( 'You cannot use the restricted coupon "%s" because you have previously used restricted coupons (%s). You can still use non-restricted coupons.', 'simple-coupon-restrictions' ),
                 $current_coupon_code,
                 implode( ', ', $restricted_coupons_used )
             );
             
             // Log for debugging
-            error_log( "SCR: Blocked coupon {$current_coupon_code} for {$customer_type} customer {$customer_email}" );
+            error_log( "SCR: Blocked restricted coupon {$current_coupon_code} for {$customer_type} customer {$customer_email} who previously used: " . implode( ', ', $restricted_coupons_used ) );
             
             throw new \Exception( $error_message );
         }

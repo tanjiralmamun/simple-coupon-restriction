@@ -68,7 +68,7 @@ class Activator {
         }
         
         // Update database version
-        update_option( 'scr_db_version', '1.1.0' );
+        update_option( 'scr_db_version', '1.1.1' );
     }
     
     /**
@@ -123,7 +123,7 @@ class Activator {
         
         // Set database version
         if ( false === get_option( 'scr_db_version' ) ) {
-            add_option( 'scr_db_version', '1.1.0' );
+            add_option( 'scr_db_version', '1.1.1' );
         }
     }
 } 
