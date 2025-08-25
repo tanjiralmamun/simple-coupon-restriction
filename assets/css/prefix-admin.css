@@ -1,0 +1,251 @@
+/**
+ * Simple Coupon Restrictions - Prefix Admin Styles
+ * Styles for the prefix exclusion admin interface
+ */
+
+/* Main prefix field container */
+.scr_excluded_coupon_prefixes_field {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+    position: relative;
+}
+
+/* Field label styling */
+.scr_excluded_coupon_prefixes_field label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Input field styling */
+.scr_excluded_coupon_prefixes_field input {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+/* Help tip positioning */
+.scr_excluded_coupon_prefixes_field .woocommerce-help-tip {
+    margin-left: 5px;
+}
+
+/* Integration with WooCommerce styling */
+.scr_excluded_coupon_prefixes_field input[type="text"] {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Focus state */
+.scr_excluded_coupon_prefixes_field input[type="text"]:focus {
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+    outline: none;
+}
+
+/* Placeholder styling */
+.scr_excluded_coupon_prefixes_field input[type="text"]::-webkit-input-placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.scr_excluded_coupon_prefixes_field input[type="text"]::-moz-placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.scr_excluded_coupon_prefixes_field input[type="text"]:-ms-input-placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.scr_excluded_coupon_prefixes_field input[type="text"]::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* Error state */
+.scr_excluded_coupon_prefixes_field.has-error input[type="text"] {
+    border-color: #dc3232;
+    box-shadow: 0 0 0 1px #dc3232;
+}
+
+/* Success state */
+.scr_excluded_coupon_prefixes_field.has-success input[type="text"] {
+    border-color: #46b450;
+    box-shadow: 0 0 0 1px #46b450;
+}
+
+/* Validation messages */
+.scr-validation-message {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.scr-validation-message.error {
+    color: #dc3232;
+}
+
+.scr-validation-message.success {
+    color: #46b450;
+}
+
+.scr-validation-message.info {
+    color: #0073aa;
+}
+
+/* Loading state */
+.scr_excluded_coupon_prefixes_field.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.scr_excluded_coupon_prefixes_field.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    border: 2px solid #ddd;
+    border-top-color: #007cba;
+    border-radius: 50%;
+    animation: scr-spin 1s linear infinite;
+}
+
+/* Spinner animation */
+@keyframes scr-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* List table column styling */
+.scr-prefix-restrictions {
+    background: #f0f6fc;
+    border: 1px solid #c3dcf0;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0073aa;
+    display: inline-block;
+}
+
+.scr-no-restrictions {
+    color: #666;
+    font-style: italic;
+}
+
+/* Responsive design */
+@media screen and (max-width: 782px) {
+    .scr_excluded_coupon_prefixes_field {
+        padding: 10px;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"] {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .scr_excluded_coupon_prefixes_field {
+        background: #2c3338;
+        border-color: #3c434a;
+    }
+    
+    .scr_excluded_coupon_prefixes_field label {
+        color: #f0f0f1;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"] {
+        background: #1d2327;
+        border-color: #3c434a;
+        color: #f0f0f1;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"]:focus {
+        border-color: #00a0d2;
+        box-shadow: 0 0 0 1px #00a0d2;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"]::-webkit-input-placeholder {
+        color: #ccc;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"]::-moz-placeholder {
+        color: #ccc;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"]:-ms-input-placeholder {
+        color: #ccc;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"]::placeholder {
+        color: #ccc;
+    }
+    
+    .scr-validation-message.error {
+        color: #ff6b6b;
+    }
+    
+    .scr-validation-message.success {
+        color: #51cf66;
+    }
+    
+    .scr-validation-message.info {
+        color: #74c0fc;
+    }
+    
+    .scr-prefix-restrictions {
+        background: #0f3460;
+        border-color: #1e5a96;
+        color: #74c0fc;
+    }
+    
+    .scr-no-restrictions {
+        color: #ccc;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .scr_excluded_coupon_prefixes_field {
+        border-width: 2px;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"] {
+        border-width: 2px;
+    }
+    
+    .scr_excluded_coupon_prefixes_field input[type="text"]:focus {
+        box-shadow: 0 0 0 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .scr_excluded_coupon_prefixes_field input[type="text"] {
+        transition: none;
+    }
+    
+    .scr_excluded_coupon_prefixes_field.loading::after {
+        animation: none;
+        content: '⋯';
+        border: none;
+        font-size: 16px;
+        width: auto;
+        height: auto;
+        margin-top: -8px;
+    }
+}

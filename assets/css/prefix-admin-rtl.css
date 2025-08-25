@@ -1,0 +1,32 @@
+/**
+ * Simple Coupon Restrictions - Prefix Admin Styles (RTL)
+ * RTL-specific styles for the prefix exclusion admin interface
+ */
+
+/* RTL adjustments for help tip */
+.scr_excluded_coupon_prefixes_field .woocommerce-help-tip {
+    margin-left: 0;
+    margin-right: 5px;
+}
+
+/* RTL adjustments for loading spinner */
+.scr_excluded_coupon_prefixes_field.loading::after {
+    right: auto;
+    left: 15px;
+}
+
+/* RTL adjustments for validation messages */
+.scr-validation-message {
+    text-align: right;
+}
+
+/* RTL adjustments for mobile tooltip */
+.scr-mobile-tooltip {
+    direction: rtl;
+    text-align: right;
+}
+
+/* RTL adjustments for prefix restrictions badge */
+.scr-prefix-restrictions {
+    direction: rtl;
+}
