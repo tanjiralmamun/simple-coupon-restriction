@@ -49,6 +49,14 @@ class Plugin {
         
         // Initialize AJAX handlers
         new \SimpleCouponRestrictions\Ajax\AjaxHandler();
+        
+        // Initialize prefix restriction functionality
+        new PrefixRestriction();
+        
+        // Initialize prefix admin interface
+        if ( is_admin() ) {
+            new \SimpleCouponRestrictions\Admin\PrefixAdmin();
+        }
     }
     
     /**

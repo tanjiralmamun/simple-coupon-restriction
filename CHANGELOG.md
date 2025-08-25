@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2025-01-04
+
+### Added
+- **Prefix-Based Coupon Restrictions**: New feature to restrict coupons based on prefixes of other applied coupons
+- Admin field "Exclude coupons with prefixes" in coupon Usage Restrictions tab
+- Real-time validation and formatting for prefix input fields
+- Bidirectional prefix checking (works both ways)
+- Case-insensitive prefix matching (e.g., "EXCHANGE123" matches "exchange" prefix)
+- Support for multiple comma-separated prefixes per coupon
+
+### Enhanced
+- **Professional Code Organization**: Restructured codebase with dedicated classes
+  - `PrefixRestriction` class for core prefix validation logic
+  - `PrefixAdmin` class for admin interface and field management
+  - Proper separation of concerns and maintainable architecture
+- **Asset Management**: Moved CSS and JavaScript to separate files with proper WordPress enqueuing
+  - Conditional loading (only on coupon edit pages)
+  - Minified CSS for production environments
+  - RTL (Right-to-Left) language support
+  - Responsive design with dark mode support
+  - Accessibility features (WCAG compliant)
+- **Internationalization**: Full localization support for all user-facing strings
+- **Performance Optimizations**: Smart asset loading and caching strategies
+
+### Technical Improvements
+- Added comprehensive input validation and sanitization
+- Implemented proper WordPress coding standards
+- Enhanced security with nonce verification and capability checks
+- Added extensive inline documentation and code comments
+- Browser compatibility with graceful degradation
+- Mobile-responsive admin interface
+
+### User Experience
+- Real-time prefix validation with visual feedback
+- Auto-formatting and duplicate removal
+- Clear error messages explaining conflicts
+- Help tooltips with usage examples
+- Loading states and visual indicators
+
 ## [1.1.1] - 2025-01-04
 
 ### Fixed
